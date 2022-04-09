@@ -96,11 +96,11 @@ async function test() {
     .then(response => response.json())
     .catch((e) => {});
     const abi = json['result'];
-    console.log(abi);
+    // console.log(abi);
     const decoder = new InputDataDecoder(abi);
     const data = "0xa723533e0000000000000000000000000000000000000000000000000000000000000002";
     const result = decoder.decodeData(data);
-    console.log(result);
+    console.log(result['method']);
 }
 
 test()
