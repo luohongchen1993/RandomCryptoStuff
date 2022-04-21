@@ -10,6 +10,8 @@ const InputDataDecoder = require('ethereum-input-data-decoder');
 let latestKnownBlockNumber = -1;
 let blockTime = 5000;
 
+var cache = {};
+
 // Our function that will triggered for every block
 
 async function sleep() {
@@ -17,7 +19,7 @@ async function sleep() {
 }
 
 async function processBlock(blockNumber) {
-    console.log("We process block: " + blockNumber);
+    console.log("####### We process block: " + blockNumber);
     let block = await web3.eth.getBlock(blockNumber);
     // console.log("new block :", block)
     for (const transactionHash of block.transactions) {
@@ -28,14 +30,24 @@ async function processBlock(blockNumber) {
         if (transaction.input != '0x'){
 
             try{
-                // get contract abi etherscan api call
-                const url = "https://api.etherscan.io/api?module=contract&action=getabi&address="+transaction.to+"&apikey="+process.env.BOT_ETHERSCAN_KEY;
+                var abi = "";
+                if (transaction.to in cache){
+                    console.log("### found the address");
+                    abi = cache[transaction.to];
+                }else{
+                    // get contract abi etherscan api call
+                    const url = "https://api.etherscan.io/api?module=contract&action=getabi&address="+transaction.to+"&apikey="+process.env.BOT_ETHERSCAN_KEY;
 
-                // get abi
-                const json = await fetch(url)
-                .then(response => response.json())
-                .catch((e) => {});
-                const abi = json['result'];
+                    // get abi
+                    const json = await fetch(url)
+                    .then(response => response.json())
+                    .catch((e) => {});
+                    abi = json['result'];
+                    cache[transaction.to] = abi;
+
+                    // sleep to avoid hitting etherscan limit
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
 
                 // decode data
                 const decoder = new InputDataDecoder(abi);
@@ -43,15 +55,12 @@ async function processBlock(blockNumber) {
                 const result = decoder.decodeData(data);
 
                 // print function call
-                console.log(result['method']);
+                console.log(transaction.to, result['method']);
             }
             catch(e){
                 console.log(e);
-                console.log('skip current transaction due to error unable to handle');
+                console.log('### skip current transaction due to error unable to handle');
             }
-
-            // sleep to avoid hitting etherscan limit
-            await new Promise(resolve => setTimeout(resolve, 200));
         }
     }
     latestKnownBlockNumber = blockNumber;
