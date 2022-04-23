@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "// NFT mint listener - related docs // https://ethereumdev.io/listening-to-new-transactions-happening-on-the-blockchain/ // https://web3py.readthedocs.io/en/stable/examples.html#eth-getlogs-limitations // https://cryptomarketpool.com/how-to-listen-for-ethereum-events-using-web3-in-python/ // https://cryptomarketpool.com/how-to-create-a-snipe-bot-to-monitor-liquidity-pairs-in-python/ // https://web3py.readthedocs.io/en/stable/examples.html#looking-up-blocks // https://github.com/ethereum/web3.py/issues/1225 // https://web3js.readthedocs.io/en/v1.2.11/web3.html // https://zhiyan.blog/2021/05/23/how-to-create-a-pancakeswap-bot-using-python/ // https://medium.com/pixelpoint/track-blockchain-transactions-like-a-boss-with-web3-js-c149045ca9bf",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky install"
   },
   "repository": {
     "type": "git",
@@ -18,7 +19,9 @@
   "dependencies": {
     "dotenv": "^16.0.0",
     "ethereum-input-data-decoder": "^0.4.1",
+    "husky": "^7.0.4",
     "node-fetch": "^3.2.3",
+    "prettier": "^2.6.2",
     "web3": "^1.7.3"
   },
   "type": "module"
