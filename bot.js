@@ -12,30 +12,32 @@ let blockTime = 5000;
 
 var cache = {};
 
+const ETHERSCAN_INTERVAL = 200; // in ms
+let invokedEtherscanApiCount = 0;
+
 // Our function that will triggered for every block
-
-async function sleep() {
-  console.log("sleep");
-}
-
 async function processBlock(blockNumber) {
   console.log("####### We process block: " + blockNumber);
   let block = await web3.eth.getBlock(blockNumber);
-  // console.log("new block :", block)
-  for (const transactionHash of block.transactions) {
-    let transaction = await web3.eth.getTransaction(transactionHash);
-    let transactionReceipt = await web3.eth.getTransactionReceipt(
-      transactionHash
-    );
+  // console.log("new block :", block);
+  const promises = block.transactions.map(async (transactionHash) => {
+    let [transaction, transactionReceipt] = await Promise.all([
+      web3.eth.getTransaction(transactionHash),
+      web3.eth.getTransactionReceipt(transactionHash),
+    ]);
+
     transaction = Object.assign(transaction, transactionReceipt);
     // console.log("Transaction: ", transaction);
     if (transaction.input != "0x") {
       try {
-        var abi = "";
+        let abi = "";
         if (transaction.to in cache) {
           console.log("### found the address");
           abi = cache[transaction.to];
         } else {
+          await new Promise((resolve) =>
+            setTimeout(resolve, ETHERSCAN_INTERVAL * invokedEtherscanApiCount++)
+          );
           // get contract abi etherscan api call
           const url =
             "https://api.etherscan.io/api?module=contract&action=getabi&address=" +
@@ -49,9 +51,6 @@ async function processBlock(blockNumber) {
             .catch((e) => {});
           abi = json["result"];
           cache[transaction.to] = abi;
-
-          // sleep to avoid hitting etherscan limit
-          await new Promise((resolve) => setTimeout(resolve, 200));
         }
 
         // decode data
@@ -68,7 +67,8 @@ async function processBlock(blockNumber) {
         );
       }
     }
-  }
+  });
+  await Promise.allSettled(promises);
   latestKnownBlockNumber = blockNumber;
 }
 
